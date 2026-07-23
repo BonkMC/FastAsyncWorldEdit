@@ -3,6 +3,10 @@
 [![bStats Servers](https://img.shields.io/bstats/servers/1403)](https://bstats.org/plugin/bukkit/FastAsyncWorldEdit/1403)
 [![Crowdin](https://badges.crowdin.net/e/4a5819fae3fd88234a8ea13bfbb072bb/localized.svg)](https://intellectualsites.crowdin.com/fastasyncworldedit)
 
+
+> [!WARNING]
+> This is a fork built and maintained with **AI**.
+
 ## What is FAWE and why should I use it?
 
 FAWE is designed for efficient world editing.
