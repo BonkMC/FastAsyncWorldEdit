@@ -19,6 +19,7 @@
 
 package com.sk89q.worldedit.bukkit;
 
+import com.fastasyncworldedit.bukkit.util.BukkitSchedulerAdapter;
 import com.fastasyncworldedit.bukkit.util.MinecraftVersion;
 import com.fastasyncworldedit.core.configuration.Settings;
 import com.fastasyncworldedit.core.extent.processor.PlacementStateProcessor;
@@ -74,6 +75,7 @@ public class BukkitServerInterface extends AbstractPlatform implements MultiUser
     public final Server server;
     public final WorldEditPlugin plugin;
     private final CommandRegistration dynamicCommands;
+    private final BukkitSchedulerAdapter schedulerAdapter;
     private final Lifecycled<Watchdog> watchdog;
     //FAWE start
     private RelighterFactory relighterFactory;
@@ -84,6 +86,7 @@ public class BukkitServerInterface extends AbstractPlatform implements MultiUser
         this.plugin = plugin;
         this.server = server;
         this.dynamicCommands = new CommandRegistration(plugin);
+        this.schedulerAdapter = new BukkitSchedulerAdapter(plugin);
         this.watchdog = plugin.getLifecycledBukkitImplAdapter()
                 .filter(BukkitImplAdapter::supportsWatchdog)
                 .map(BukkitWatchdog::new);
@@ -135,7 +138,7 @@ public class BukkitServerInterface extends AbstractPlatform implements MultiUser
 
     @Override
     public int schedule(long delay, long period, Runnable task) {
-        return Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, task, delay, period);
+        return schedulerAdapter.repeat(task, delay, period);
     }
 
     @Override

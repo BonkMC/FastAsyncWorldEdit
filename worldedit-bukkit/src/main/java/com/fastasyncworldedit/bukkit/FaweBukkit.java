@@ -175,6 +175,11 @@ public class FaweBukkit implements IFawe, Listener {
         return new BukkitTaskManager(plugin);
     }
 
+    @Override
+    public boolean isMainThread(Thread ownerThread) {
+        return ownerThread == Thread.currentThread() || BukkitTaskManager.isTaskThread() || Bukkit.isPrimaryThread();
+    }
+
     public Plugin getPlugin() {
         return plugin;
     }

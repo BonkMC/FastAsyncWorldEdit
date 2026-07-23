@@ -19,7 +19,7 @@
 
 package com.sk89q.worldedit.bukkit;
 
-import com.fastasyncworldedit.core.util.TaskManager;
+import com.fastasyncworldedit.bukkit.util.BukkitTaskContext;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.extension.platform.AbstractCommandBlockActor;
 import com.sk89q.worldedit.session.SessionKey;
@@ -29,7 +29,7 @@ import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.adapter.bukkit.TextAdapter;
 import com.sk89q.worldedit.util.formatting.text.format.TextColor;
-import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.command.BlockCommandSender;
@@ -47,6 +47,7 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
     private final BlockCommandSender sender;
     private final WorldEditPlugin plugin;
     private final UUID uuid;
+    private final Location location;
 
     public BukkitBlockCommandSender(WorldEditPlugin plugin, BlockCommandSender sender) {
         super(BukkitAdapter.adapt(checkNotNull(sender).getBlock().getLocation()));
@@ -55,6 +56,7 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
         this.plugin = plugin;
         this.sender = sender;
         this.uuid = UUID.nameUUIDFromBytes((UUID_PREFIX + sender.getName()).getBytes(StandardCharsets.UTF_8));
+        this.location = sender.getBlock().getLocation();
     }
 
     @Override
@@ -65,63 +67,53 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
     @Override
     @Deprecated
     public void printRaw(String msg) {
-        //FAWE start - ensure executed on main thread
-        TaskManager.taskManager().sync(() -> {
+        BukkitTaskContext.callRegion(plugin, location, () -> {
             for (String part : msg.split("\n")) {
                 sender.sendMessage(part);
             }
             return null;
         });
-        //FAWE end
     }
 
     @Override
     @Deprecated
     public void print(String msg) {
-        //FAWE start - ensure executed on main thread
-        TaskManager.taskManager().sync(() -> {
+        BukkitTaskContext.callRegion(plugin, location, () -> {
             for (String part : msg.split("\n")) {
                 print(TextComponent.of(part, TextColor.LIGHT_PURPLE));
             }
             return null;
         });
-        //FAWE end
     }
 
     @Override
     @Deprecated
     public void printDebug(String msg) {
-        //FAWE start - ensure executed on main thread
-        TaskManager.taskManager().sync(() -> {
+        BukkitTaskContext.callRegion(plugin, location, () -> {
             for (String part : msg.split("\n")) {
                 print(TextComponent.of(part, TextColor.GRAY));
             }
             return null;
         });
-        //FAWE end
     }
 
     @Override
     @Deprecated
     public void printError(String msg) {
-        //FAWE start - ensure executed on main thread
-        TaskManager.taskManager().sync(() -> {
+        BukkitTaskContext.callRegion(plugin, location, () -> {
             for (String part : msg.split("\n")) {
                 print(TextComponent.of(part, TextColor.RED));
             }
             return null;
         });
-        //FAWE end
     }
 
     @Override
     public void print(Component component) {
-        //FAWE start - ensure executed on main thread
-        TaskManager.taskManager().sync(() -> {
+        BukkitTaskContext.callRegion(plugin, location, () -> {
             TextAdapter.sendMessage(sender, WorldEditText.format(component, getLocale()));
             return null;
         });
-        //FAWE end
     }
 
     @Override
@@ -191,20 +183,10 @@ public class BukkitBlockCommandSender extends AbstractCommandBlockActor {
 
             @Override
             public boolean isActive() {
-                if (Bukkit.isPrimaryThread()) {
-                    // we can update eagerly
+                return BukkitTaskContext.callRegion(plugin, location, () -> {
                     updateActive();
-                } else {
-                    // we should update it eventually
-                    Bukkit.getScheduler().callSyncMethod(
-                            plugin,
-                            () -> {
-                                updateActive();
-                                return null;
-                            }
-                    );
-                }
-                return active;
+                    return active;
+                });
             }
 
             @Override

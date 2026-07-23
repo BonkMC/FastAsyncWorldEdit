@@ -17,6 +17,10 @@ public interface IFawe {
 
     TaskManager getTaskManager();
 
+    default boolean isMainThread(Thread ownerThread) {
+        return ownerThread == Thread.currentThread();
+    }
+
     Collection<FaweMaskManager> getMaskManagers();
 
     /**

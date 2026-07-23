@@ -19,9 +19,9 @@
 
 package com.sk89q.worldedit.bukkit;
 
+import com.fastasyncworldedit.bukkit.util.BukkitTaskContext;
 import com.fastasyncworldedit.core.configuration.Caption;
 import com.fastasyncworldedit.core.configuration.Settings;
-import com.fastasyncworldedit.core.util.TaskManager;
 import com.sk89q.util.StringUtil;
 import com.sk89q.wepif.VaultResolver;
 import com.sk89q.worldedit.WorldEdit;
@@ -52,6 +52,7 @@ import com.sk89q.worldedit.world.block.BlockStateHolder;
 import com.sk89q.worldedit.world.block.BlockTypes;
 import com.sk89q.worldedit.world.gamemode.GameMode;
 import com.sk89q.worldedit.world.gamemode.GameModes;
+import io.papermc.lib.PaperLib;
 import org.apache.logging.log4j.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -163,7 +164,7 @@ public class BukkitPlayer extends AbstractPlayerActor {
     public void giveItem(BaseItemStack itemStack) {
         final PlayerInventory inv = player.getInventory();
         ItemStack newItem = BukkitAdapter.adapt(itemStack);
-        TaskManager.taskManager().sync(() -> {
+        BukkitTaskContext.callEntity(plugin, player, () -> {
             if (itemStack.getType().id().equalsIgnoreCase(WorldEdit.getInstance().getConfiguration().wandItem)) {
                 inv.remove(newItem);
             }
@@ -185,7 +186,7 @@ public class BukkitPlayer extends AbstractPlayerActor {
             }
             player.updateInventory();
             return null;
-        });
+        }, () -> null);
     }
     //FAWE end
 
@@ -242,14 +243,14 @@ public class BukkitPlayer extends AbstractPlayerActor {
         }
         org.bukkit.World finalWorld = world;
         //FAWE end
-        return TaskManager.taskManager().sync(() -> player.teleport(new Location(
+        return PaperLib.teleportAsync(player, new Location(
                 finalWorld,
                 pos.x(),
                 pos.y(),
                 pos.z(),
                 yaw,
                 pitch
-        )));
+        )).join();
     }
 
     @Override
@@ -363,7 +364,7 @@ public class BukkitPlayer extends AbstractPlayerActor {
 
     @Override
     public boolean setLocation(com.sk89q.worldedit.util.Location location) {
-        return player.teleport(BukkitAdapter.adapt(location));
+        return PaperLib.teleportAsync(player, BukkitAdapter.adapt(location)).join();
     }
 
     @Override
